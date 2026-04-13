@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual envs
+.venv/
+venv/
+env/
+.python-version
+
+# uv
+.uv/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Docker / local state
+postgres-data/
+redis-data/
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Secrets
+*.pem
+*.key
+secrets/
