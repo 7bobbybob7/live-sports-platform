@@ -33,6 +33,28 @@ services:
       timeout: 3s
       retries: 5
 
+  redpanda:
+    image: redpandadata/redpanda:v24.2.11
+    container_name: sports-redpanda
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --kafka-addr=INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      - --advertise-kafka-addr=INTERNAL://redpanda:29092,EXTERNAL://localhost:9092
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres-data:
   redis-data:
+  redpanda-data:
