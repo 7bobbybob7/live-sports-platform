@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package mlb.v1;
+
+import "google/protobuf/timestamp.proto";
+
+enum Sport {
+  SPORT_UNSPECIFIED = 0;
+  SPORT_MLB = 1;
+  SPORT_NFL = 2;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_PITCH = 1;
+  EVENT_TYPE_ATBAT_START = 2;
+  EVENT_TYPE_ATBAT_END = 3;
+  EVENT_TYPE_PICKOFF = 4;
+  EVENT_TYPE_MOUND_VISIT = 5;
+  EVENT_TYPE_PITCHING_CHANGE = 6;
+  EVENT_TYPE_SUBSTITUTION = 7;
+  EVENT_TYPE_DEFENSIVE_SHIFT = 8;
+  EVENT_TYPE_INNING_STATE = 9;
+  EVENT_TYPE_GAME_STATE = 10;
+  EVENT_TYPE_NFL_PLAY = 11;
+}
+
+message Spine {
+  string event_id = 1;
+  EventType event_type = 2;
+  Sport sport = 3;
+  string game_pk = 4;
+  google.protobuf.Timestamp event_time = 5;
+  google.protobuf.Timestamp source_time = 6;
+  google.protobuf.Timestamp ingest_time = 7;
+}
+
+message MLBPitch {
+  Spine spine = 1;
+
+  int32 at_bat_index = 2;
+  int32 pitch_number = 3;
+
+  optional int32 inning = 4;
+  optional string inning_half = 5;
+
+  optional int64 batter_id = 6;
+  optional string batter_name = 7;
+  optional int64 pitcher_id = 8;
+  optional string pitcher_name = 9;
+
+  optional string pitch_type = 10;
+  optional string pitch_type_description = 11;
+  optional double start_speed_mph = 12;
+  optional double end_speed_mph = 13;
+  optional double spin_rate_rpm = 14;
+
+  optional int32 balls = 15;
+  optional int32 strikes = 16;
+  optional int32 outs = 17;
+
+  optional string call_code = 18;
+  optional string call_description = 19;
+  optional bool is_in_play = 20;
+  optional bool is_strike = 21;
+  optional bool is_ball = 22;
+
+  optional string raw_payload_json = 23;
+}
+
+message MLBGameState {
+  Spine spine = 1;
+
+  optional string status = 2;
+  optional string home_team = 3;
+  optional string away_team = 4;
+  optional int32 home_score = 5;
+  optional int32 away_score = 6;
+  optional int32 inning = 7;
+  optional string inning_half = 8;
+
+  optional string raw_payload_json = 9;
+}

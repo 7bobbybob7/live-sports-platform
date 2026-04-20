@@ -1,4 +1,4 @@
-.PHONY: up down logs psql redis-cli install test lint typecheck fmt migrate ingestor api
+.PHONY: up down logs psql redis-cli install test lint typecheck fmt migrate ingestor api proto
 
 up:
 	docker compose up -d
@@ -40,3 +40,10 @@ ingestor:
 
 api:
 	python -m services.query_api
+
+proto:
+	python -m grpc_tools.protoc \
+		--proto_path=schemas/proto \
+		--python_out=schemas/proto \
+		--mypy_out=schemas/proto \
+		schemas/proto/mlb/v1/events.proto
