@@ -9,11 +9,13 @@ services/mlb_ingestor/parser.py.
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 
+from schemas.mlb import EventType, Sport
 from services.mlb_ingestor.parser import extract_game_state, extract_pitch_events
 
 
-def _make_feed() -> dict:
+def _make_feed() -> dict[str, Any]:
     return {
         "gamePk": 745612,
         "metaData": {"timeStamp": "2024-07-15T23:05:12.000Z"},
@@ -120,45 +122,48 @@ def _make_feed() -> dict:
 
 
 class TestExtractPitchEvents:
-    def test_parses_all_pitches(self):
+    def test_parses_all_pitches(self) -> None:
         events = extract_pitch_events(_make_feed())
         assert len(events) == 3
 
-    def test_skips_non_pitch_events(self):
+    def test_skips_non_pitch_events(self) -> None:
         events = extract_pitch_events(_make_feed())
-        # Only 3 pitch events in the fixture, not 4 — non-pitch was filtered.
-        assert all(e.event_type.value == "pitch" for e in events)
+        assert all(e.spine.event_type == EventType.EVENT_TYPE_PITCH for e in events)
 
-    def test_event_ids_are_deterministic(self):
+    def test_sport_is_mlb(self) -> None:
+        events = extract_pitch_events(_make_feed())
+        assert all(e.spine.sport == Sport.SPORT_MLB for e in events)
+
+    def test_event_ids_are_deterministic(self) -> None:
         a = extract_pitch_events(_make_feed())
         b = extract_pitch_events(_make_feed())
-        assert [e.event_id for e in a] == [e.event_id for e in b]
+        assert [e.spine.event_id for e in a] == [e.spine.event_id for e in b]
 
-    def test_event_ids_are_unique(self):
+    def test_event_ids_are_unique(self) -> None:
         events = extract_pitch_events(_make_feed())
-        ids = {e.event_id for e in events}
+        ids = {e.spine.event_id for e in events}
         assert len(ids) == len(events)
 
-    def test_event_ids_follow_derivation_rule(self):
+    def test_event_ids_follow_derivation_rule(self) -> None:
         events = extract_pitch_events(_make_feed())
-        assert events[0].event_id == "mlb:745612:pitch:0:1"
-        assert events[1].event_id == "mlb:745612:pitch:0:2"
-        assert events[2].event_id == "mlb:745612:pitch:1:1"
+        assert events[0].spine.event_id == "mlb:745612:pitch:0:1"
+        assert events[1].spine.event_id == "mlb:745612:pitch:0:2"
+        assert events[2].spine.event_id == "mlb:745612:pitch:1:1"
 
-    def test_three_timestamps_populated(self):
+    def test_three_timestamps_populated(self) -> None:
         events = extract_pitch_events(_make_feed())
         for e in events:
-            assert e.event_time is not None
-            assert e.source_time is not None
-            assert e.ingest_time is not None
+            assert e.spine.HasField("event_time")
+            assert e.spine.HasField("source_time")
+            assert e.spine.HasField("ingest_time")
 
-    def test_source_time_comes_from_metadata(self):
+    def test_source_time_comes_from_metadata(self) -> None:
         events = extract_pitch_events(_make_feed())
         expected = datetime(2024, 7, 15, 23, 5, 12, tzinfo=UTC)
         for e in events:
-            assert e.source_time == expected
+            assert e.spine.source_time.ToDatetime(tzinfo=UTC) == expected
 
-    def test_pitch_details_populated(self):
+    def test_pitch_details_populated(self) -> None:
         events = extract_pitch_events(_make_feed())
         first = events[0]
         assert first.pitch_type == "FF"
@@ -171,15 +176,27 @@ class TestExtractPitchEvents:
         assert first.at_bat_index == 0
         assert first.pitch_number == 1
 
-    def test_empty_feed_returns_empty_list(self):
-        empty_feed = {"gamePk": 1, "metaData": {}, "liveData": {"plays": {"allPlays": []}}}
+    def test_raw_payload_json_populated(self) -> None:
+        import json
+
+        events = extract_pitch_events(_make_feed())
+        first_raw = json.loads(events[0].raw_payload_json)
+        assert first_raw["pitchNumber"] == 1
+        assert first_raw["details"]["type"]["code"] == "FF"
+
+    def test_empty_feed_returns_empty_list(self) -> None:
+        empty_feed: dict[str, Any] = {
+            "gamePk": 1,
+            "metaData": {},
+            "liveData": {"plays": {"allPlays": []}},
+        }
         assert extract_pitch_events(empty_feed) == []
 
 
 class TestExtractGameState:
-    def test_extracts_top_level_state(self):
+    def test_extracts_top_level_state(self) -> None:
         state = extract_game_state(_make_feed())
-        assert state.game_pk == "745612"
+        assert state.spine.game_pk == "745612"
         assert state.status == "In Progress"
         assert state.home_team == "San Diego Padres"
         assert state.away_team == "Los Angeles Dodgers"
@@ -187,3 +204,11 @@ class TestExtractGameState:
         assert state.away_score == 1
         assert state.inning == 4
         assert state.inning_half == "top"
+
+    def test_spine_populated(self) -> None:
+        state = extract_game_state(_make_feed())
+        assert state.spine.event_type == EventType.EVENT_TYPE_GAME_STATE
+        assert state.spine.sport == Sport.SPORT_MLB
+        assert state.spine.HasField("event_time")
+        assert state.spine.HasField("source_time")
+        assert state.spine.HasField("ingest_time")

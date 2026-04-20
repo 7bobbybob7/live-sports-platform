@@ -1,8 +1,7 @@
 """Postgres writer for the MLB ingestor.
 
-Phase 1 writes events directly to Postgres. Phase 2 splits this out: the
-ingestor will produce to Kafka, and a separate persistence consumer will
-write to Postgres.
+Phase 1 writes events directly to Postgres. Phase 3 step 6 splits this:
+the ingestor produces to Kafka and the persistence-consumer writes here.
 
 Dedup happens at the DB via `events.event_id` PK — ON CONFLICT DO NOTHING.
 """
@@ -10,11 +9,13 @@ Dedup happens at the DB via `events.event_id` PK — ON CONFLICT DO NOTHING.
 from __future__ import annotations
 
 import json
+from datetime import UTC
 from typing import Any
 
 import asyncpg
 
-from schemas.mlb import MLBGameState, MLBPitchEvent
+from schemas.mlb import EventType, MLBGameState, MLBPitchEvent, Sport
+from schemas.proto_utils import enum_int_to_name, proto_to_payload_dict
 from services.common.logging import get_logger
 
 _logger = get_logger(__name__)
@@ -44,17 +45,18 @@ class EventStore:
         ON CONFLICT (event_id) DO NOTHING
         RETURNING event_id
         """
-        payload = event.model_dump(mode="json")
+        payload = proto_to_payload_dict(event)
+        spine = event.spine
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
                 query,
-                event.event_id,
-                event.event_type.value,
-                event.sport.value,
-                event.game_pk,
-                event.event_time,
-                event.source_time,
-                event.ingest_time,
+                spine.event_id,
+                enum_int_to_name(EventType.DESCRIPTOR, spine.event_type),
+                enum_int_to_name(Sport.DESCRIPTOR, spine.sport),
+                spine.game_pk,
+                spine.event_time.ToDatetime(tzinfo=UTC),
+                spine.source_time.ToDatetime(tzinfo=UTC),
+                spine.ingest_time.ToDatetime(tzinfo=UTC),
                 json.dumps(payload),
             )
         return row is not None
@@ -73,14 +75,15 @@ class EventStore:
             updated_at = now(),
             payload    = EXCLUDED.payload
         """
+        spine = game.spine
         async with self._pool.acquire() as conn:
             await conn.execute(
                 query,
-                game.game_pk,
-                game.sport.value,
-                game.status,
-                game.home_team,
-                game.away_team,
-                game.event_time,
+                spine.game_pk,
+                enum_int_to_name(Sport.DESCRIPTOR, spine.sport),
+                game.status or None,
+                game.home_team or None,
+                game.away_team or None,
+                spine.event_time.ToDatetime(tzinfo=UTC),
                 json.dumps(raw),
             )

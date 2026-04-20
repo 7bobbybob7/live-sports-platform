@@ -1,4 +1,3 @@
-from schemas.base import BaseEvent, EventType, Sport
 from schemas.event_ids import (
     derive_atbat_end_id,
     derive_atbat_start_id,
@@ -11,10 +10,9 @@ from schemas.event_ids import (
     derive_pitching_change_id,
     derive_substitution_id,
 )
-from schemas.mlb import MLBGameState, MLBPitchEvent
+from schemas.mlb import EventType, MLBGameState, MLBPitchEvent, Sport
 
 __all__ = [
-    "BaseEvent",
     "EventType",
     "MLBGameState",
     "MLBPitchEvent",
