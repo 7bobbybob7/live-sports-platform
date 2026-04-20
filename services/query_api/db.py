@@ -28,7 +28,7 @@ class QueryRepository:
     async def healthcheck(self) -> bool:
         async with self._pool.acquire() as conn:
             result = await conn.fetchval("SELECT 1")
-        return result == 1
+        return bool(result == 1)
 
     async def latest_pitch_per_active_game(self) -> list[dict[str, Any]]:
         """One row per active MLB game, with that game's most recent pitch."""

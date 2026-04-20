@@ -15,7 +15,7 @@ Endpoints we care about in Phase 1:
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -42,7 +42,7 @@ class MLBClient:
         """Return the list of game dicts scheduled for `date` (UTC today by default)."""
         d = (date or datetime.now(UTC)).strftime("%Y-%m-%d")
         url = f"{self._base}/schedule"
-        params = {"sportId": 1, "date": d}
+        params: dict[str, int | str] = {"sportId": 1, "date": d}
         resp = await self._client.get(url, params=params)
         resp.raise_for_status()
         body = resp.json()
@@ -56,7 +56,7 @@ class MLBClient:
         url = f"{self._base.replace('/v1', '/v1.1')}/game/{game_pk}/feed/live"
         resp = await self._client.get(url)
         resp.raise_for_status()
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
     @staticmethod
     def is_live(game: dict[str, Any]) -> bool:

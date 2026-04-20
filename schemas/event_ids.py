@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import Any
 
 
-def _payload_hash(payload: dict) -> str:
+def _payload_hash(payload: dict[str, Any]) -> str:
     """Stable hash of a dict — sorted keys, compact separators."""
     serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(serialized.encode()).hexdigest()[:16]
@@ -74,7 +75,7 @@ def derive_inning_state_id(
 
 
 def derive_game_state_id(
-    game_pk: int | str, state_change_type: str, payload: dict
+    game_pk: int | str, state_change_type: str, payload: dict[str, Any]
 ) -> str:
     """Fallback for game-level state changes without a stable natural ordinal."""
     return f"mlb:{game_pk}:game:{state_change_type}:{_payload_hash(payload)}"

@@ -13,6 +13,7 @@ FastAPI app — matches how Prometheus scrapes microservices.
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -29,7 +30,7 @@ _logger = get_logger(__name__)
 
 
 @asynccontextmanager
-async def _lifespan(app: FastAPI):
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     config = Config.load()
     configure_logging(config.log_level)
     init_sentry(config.sentry_dsn, config.sentry_environment, "query-api")

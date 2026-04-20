@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import ConfigDict, Field
 
 from schemas.base import BaseEvent, EventType, Sport
@@ -44,7 +46,7 @@ class MLBPitchEvent(BaseEvent):
     is_strike: bool | None = None
     is_ball: bool | None = None
 
-    raw_payload: dict | None = Field(
+    raw_payload: dict[str, Any] | None = Field(
         default=None,
         description="Original MLB Stats API playEvent dict — preserved for debugging",
     )
@@ -66,4 +68,4 @@ class MLBGameState(BaseEvent):
     inning: int | None = None
     inning_half: str | None = None
 
-    raw_payload: dict | None = None
+    raw_payload: dict[str, Any] | None = None
