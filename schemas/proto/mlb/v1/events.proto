@@ -68,6 +68,22 @@ message MLBPitch {
   optional string raw_payload_json = 23;
 }
 
+// Self-contained pitch event: the original pitch plus the rolling per-game
+// context the enricher resolved at the time of the pitch. Downstream
+// consumers (live-gateway, persistence-consumer) must not need DB lookups
+// to react to one of these.
+message MLBPitchEnriched {
+  Spine spine = 1;
+  MLBPitch pitch = 2;
+
+  optional int32 home_score = 3;
+  optional int32 away_score = 4;
+
+  optional bool runner_on_first = 5;
+  optional bool runner_on_second = 6;
+  optional bool runner_on_third = 7;
+}
+
 message MLBGameState {
   Spine spine = 1;
 

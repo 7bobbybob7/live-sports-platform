@@ -8,6 +8,7 @@ lands, flip the imports here and every consumer keeps working.
 from schemas.proto.mlb.v1 import events_pb2
 
 MLBPitchEvent = events_pb2.MLBPitch
+MLBPitchEnrichedEvent = events_pb2.MLBPitchEnriched
 MLBGameState = events_pb2.MLBGameState
 Spine = events_pb2.Spine
 Sport = events_pb2.Sport
@@ -16,6 +17,7 @@ EventType = events_pb2.EventType
 __all__ = [
     "EventType",
     "MLBGameState",
+    "MLBPitchEnrichedEvent",
     "MLBPitchEvent",
     "Sport",
     "Spine",

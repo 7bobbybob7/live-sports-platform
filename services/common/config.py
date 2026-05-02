@@ -47,13 +47,16 @@ class Config:
     kafka_bootstrap_servers: str
     kafka_client_id: str
     kafka_group_persistence: str
+    kafka_group_enricher: str
     kafka_topic_mlb_raw: str
     kafka_topic_mlb_raw_dlq: str
+    kafka_topic_mlb_enriched: str
 
     log_level: str
     metrics_port_ingestor: int
     metrics_port_query_api: int
     metrics_port_persistence_consumer: int
+    metrics_port_enricher: int
 
     sentry_dsn: str
     sentry_environment: str
@@ -79,9 +82,13 @@ class Config:
             kafka_group_persistence=_optional(
                 "KAFKA_GROUP_PERSISTENCE", "persistence-consumer"
             ),
+            kafka_group_enricher=_optional("KAFKA_GROUP_ENRICHER", "enricher"),
             kafka_topic_mlb_raw=_optional("KAFKA_TOPIC_MLB_RAW", "mlb.events.raw"),
             kafka_topic_mlb_raw_dlq=_optional(
                 "KAFKA_TOPIC_MLB_RAW_DLQ", "mlb.events.raw.dlq"
+            ),
+            kafka_topic_mlb_enriched=_optional(
+                "KAFKA_TOPIC_MLB_ENRICHED", "mlb.events.enriched"
             ),
             log_level=_optional("LOG_LEVEL", "INFO"),
             metrics_port_ingestor=_int("METRICS_PORT_INGESTOR", 9100),
@@ -89,6 +96,7 @@ class Config:
             metrics_port_persistence_consumer=_int(
                 "METRICS_PORT_PERSISTENCE_CONSUMER", 9102
             ),
+            metrics_port_enricher=_int("METRICS_PORT_ENRICHER", 9103),
             sentry_dsn=_optional("SENTRY_DSN", ""),
             sentry_environment=_optional("SENTRY_ENVIRONMENT", "local"),
         )

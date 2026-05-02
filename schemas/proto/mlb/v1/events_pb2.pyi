@@ -276,6 +276,70 @@ class MLBPitch(_message.Message):
 Global___MLBPitch: _TypeAlias = MLBPitch  # noqa: Y015
 
 @_typing.final
+class MLBPitchEnriched(_message.Message):
+    """Self-contained pitch event: the original pitch plus the rolling per-game
+    context the enricher resolved at the time of the pitch. Downstream
+    consumers (live-gateway, persistence-consumer) must not need DB lookups
+    to react to one of these.
+    """
+
+    DESCRIPTOR: _descriptor.Descriptor
+
+    SPINE_FIELD_NUMBER: _builtins.int
+    PITCH_FIELD_NUMBER: _builtins.int
+    HOME_SCORE_FIELD_NUMBER: _builtins.int
+    AWAY_SCORE_FIELD_NUMBER: _builtins.int
+    RUNNER_ON_FIRST_FIELD_NUMBER: _builtins.int
+    RUNNER_ON_SECOND_FIELD_NUMBER: _builtins.int
+    RUNNER_ON_THIRD_FIELD_NUMBER: _builtins.int
+    home_score: _builtins.int
+    away_score: _builtins.int
+    runner_on_first: _builtins.bool
+    runner_on_second: _builtins.bool
+    runner_on_third: _builtins.bool
+    @_builtins.property
+    def spine(self) -> Global___Spine: ...
+    @_builtins.property
+    def pitch(self) -> Global___MLBPitch: ...
+    def __init__(
+        self,
+        *,
+        spine: Global___Spine | None = ...,
+        pitch: Global___MLBPitch | None = ...,
+        home_score: _builtins.int | None = ...,
+        away_score: _builtins.int | None = ...,
+        runner_on_first: _builtins.bool | None = ...,
+        runner_on_second: _builtins.bool | None = ...,
+        runner_on_third: _builtins.bool | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["_away_score", b"_away_score", "_home_score", b"_home_score", "_runner_on_first", b"_runner_on_first", "_runner_on_second", b"_runner_on_second", "_runner_on_third", b"_runner_on_third", "away_score", b"away_score", "home_score", b"home_score", "pitch", b"pitch", "runner_on_first", b"runner_on_first", "runner_on_second", b"runner_on_second", "runner_on_third", b"runner_on_third", "spine", b"spine"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["_away_score", b"_away_score", "_home_score", b"_home_score", "_runner_on_first", b"_runner_on_first", "_runner_on_second", b"_runner_on_second", "_runner_on_third", b"_runner_on_third", "away_score", b"away_score", "home_score", b"home_score", "pitch", b"pitch", "runner_on_first", b"runner_on_first", "runner_on_second", b"runner_on_second", "runner_on_third", b"runner_on_third", "spine", b"spine"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType__away_score: _TypeAlias = _typing.Literal["away_score"]  # noqa: Y015
+    _WhichOneofArgType__away_score: _TypeAlias = _typing.Literal["_away_score", b"_away_score"]  # noqa: Y015
+    _WhichOneofReturnType__home_score: _TypeAlias = _typing.Literal["home_score"]  # noqa: Y015
+    _WhichOneofArgType__home_score: _TypeAlias = _typing.Literal["_home_score", b"_home_score"]  # noqa: Y015
+    _WhichOneofReturnType__runner_on_first: _TypeAlias = _typing.Literal["runner_on_first"]  # noqa: Y015
+    _WhichOneofArgType__runner_on_first: _TypeAlias = _typing.Literal["_runner_on_first", b"_runner_on_first"]  # noqa: Y015
+    _WhichOneofReturnType__runner_on_second: _TypeAlias = _typing.Literal["runner_on_second"]  # noqa: Y015
+    _WhichOneofArgType__runner_on_second: _TypeAlias = _typing.Literal["_runner_on_second", b"_runner_on_second"]  # noqa: Y015
+    _WhichOneofReturnType__runner_on_third: _TypeAlias = _typing.Literal["runner_on_third"]  # noqa: Y015
+    _WhichOneofArgType__runner_on_third: _TypeAlias = _typing.Literal["_runner_on_third", b"_runner_on_third"]  # noqa: Y015
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__away_score) -> _WhichOneofReturnType__away_score | None: ...
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__home_score) -> _WhichOneofReturnType__home_score | None: ...
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__runner_on_first) -> _WhichOneofReturnType__runner_on_first | None: ...
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__runner_on_second) -> _WhichOneofReturnType__runner_on_second | None: ...
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__runner_on_third) -> _WhichOneofReturnType__runner_on_third | None: ...
+
+Global___MLBPitchEnriched: _TypeAlias = MLBPitchEnriched  # noqa: Y015
+
+@_typing.final
 class MLBGameState(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 

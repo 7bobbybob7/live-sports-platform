@@ -10,11 +10,12 @@ from schemas.event_ids import (
     derive_pitching_change_id,
     derive_substitution_id,
 )
-from schemas.mlb import EventType, MLBGameState, MLBPitchEvent, Sport
+from schemas.mlb import EventType, MLBGameState, MLBPitchEnrichedEvent, MLBPitchEvent, Sport
 
 __all__ = [
     "EventType",
     "MLBGameState",
+    "MLBPitchEnrichedEvent",
     "MLBPitchEvent",
     "Sport",
     "derive_atbat_end_id",
