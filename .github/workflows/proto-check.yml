@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install codegen deps
-        run: pip install "grpcio-tools>=1.64" "mypy-protobuf>=3.6"
+        run: pip install "grpcio-tools==1.80.0" "mypy-protobuf==5.1.0"
       - name: Regenerate
         run: make proto
       - name: Fail if diff
