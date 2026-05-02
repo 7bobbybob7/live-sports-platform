@@ -44,9 +44,16 @@ class Config:
     query_api_host: str
     query_api_port: int
 
+    kafka_bootstrap_servers: str
+    kafka_client_id: str
+    kafka_group_persistence: str
+    kafka_topic_mlb_raw: str
+    kafka_topic_mlb_raw_dlq: str
+
     log_level: str
     metrics_port_ingestor: int
     metrics_port_query_api: int
+    metrics_port_persistence_consumer: int
 
     sentry_dsn: str
     sentry_environment: str
@@ -65,9 +72,23 @@ class Config:
             ),
             query_api_host=_optional("QUERY_API_HOST", "0.0.0.0"),
             query_api_port=_int("QUERY_API_PORT", 8080),
+            kafka_bootstrap_servers=_optional(
+                "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
+            ),
+            kafka_client_id=_optional("KAFKA_CLIENT_ID", "live-sports-platform"),
+            kafka_group_persistence=_optional(
+                "KAFKA_GROUP_PERSISTENCE", "persistence-consumer"
+            ),
+            kafka_topic_mlb_raw=_optional("KAFKA_TOPIC_MLB_RAW", "mlb.events.raw"),
+            kafka_topic_mlb_raw_dlq=_optional(
+                "KAFKA_TOPIC_MLB_RAW_DLQ", "mlb.events.raw.dlq"
+            ),
             log_level=_optional("LOG_LEVEL", "INFO"),
             metrics_port_ingestor=_int("METRICS_PORT_INGESTOR", 9100),
             metrics_port_query_api=_int("METRICS_PORT_QUERY_API", 9101),
+            metrics_port_persistence_consumer=_int(
+                "METRICS_PORT_PERSISTENCE_CONSUMER", 9102
+            ),
             sentry_dsn=_optional("SENTRY_DSN", ""),
             sentry_environment=_optional("SENTRY_ENVIRONMENT", "local"),
         )

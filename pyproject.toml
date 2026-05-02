@@ -15,6 +15,8 @@ dependencies = [
     "python-dotenv>=1.0",
     "sentry-sdk>=2.3",
     "orjson>=3.10",
+    "aiokafka>=0.11",
+    "protobuf>=5.26",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +29,7 @@ dev = [
     "grpcio-tools>=1.64",
     "mypy-protobuf>=3.6",
     "types-protobuf>=5.0",
+    "testcontainers[kafka,postgres]>=4.8",
 ]
 
 [build-system]
@@ -40,6 +43,9 @@ packages = ["schemas", "services"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "integration: integration tests that spin up containers (Kafka, Postgres). Slow.",
+]
 
 [tool.ruff]
 line-length = 100
