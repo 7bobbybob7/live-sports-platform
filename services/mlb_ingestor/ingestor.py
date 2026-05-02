@@ -28,6 +28,7 @@ from services.common.logging import get_logger
 from services.mlb_ingestor.cursor import CursorStore, GameCursor
 from services.mlb_ingestor.mlb_client import MLBClient
 from services.mlb_ingestor.parser import extract_game_state, extract_pitch_events
+from services.mlb_ingestor.publisher import KafkaPublisher
 from services.mlb_ingestor.storage import EventStore
 
 _logger = get_logger(__name__)
@@ -39,14 +40,9 @@ POLL_LATENCY = Histogram(
     "Time spent polling MLB Stats API per call",
     labelnames=("endpoint",),
 )
-EVENTS_PUBLISHED = Counter(
-    "mlb_ingestor_events_published_total",
-    "Events successfully written to storage",
-    labelnames=("event_type",),
-)
 EVENTS_DEDUPED = Counter(
     "mlb_ingestor_events_deduped_total",
-    "Events skipped due to dedup (ON CONFLICT DO NOTHING or cursor)",
+    "Events skipped due to cursor dedup",
     labelnames=("reason",),
 )
 API_ERRORS = Counter(
@@ -75,11 +71,13 @@ class MLBIngestor:
         mlb_client: MLBClient,
         cursor_store: CursorStore,
         event_store: EventStore,
+        publisher: KafkaPublisher,
     ):
         self._config = config
         self._mlb = mlb_client
         self._cursors = cursor_store
         self._events = event_store
+        self._publisher = publisher
         self._game_tasks: dict[str, asyncio.Task[None]] = {}
         self._stop = asyncio.Event()
 
@@ -198,23 +196,23 @@ class MLBIngestor:
                 EVENTS_DEDUPED.labels(reason="cursor").inc()
                 continue
 
-            was_new = await self._events.insert_pitch(pitch)
-            if was_new:
-                EVENTS_PUBLISHED.labels(event_type="pitch").inc()
-                published += 1
-            else:
-                EVENTS_DEDUPED.labels(reason="db_conflict").inc()
+            # PRD: cursor advance is gated on successful publish ack. If the
+            # publish raises, propagate so cursor stays put and the same pitch
+            # is retried on the next poll. Deterministic event_id makes retry
+            # safe — persistence-consumer dedupes at the DB layer.
+            await self._publisher.publish_pitch(pitch)
+            published += 1
 
             new_cursor = GameCursor(
                 last_at_bat_index=pitch.at_bat_index,
                 last_pitch_number=pitch.pitch_number,
                 updated_at=datetime.now(UTC),
             )
-
-        if new_cursor is not None and new_cursor != cursor:
             await self._cursors.set(
                 game_pk, new_cursor.last_at_bat_index, new_cursor.last_pitch_number
             )
+
+        if new_cursor is not None and new_cursor != cursor:
             CURSOR_STALENESS.labels(game_pk=game_pk).set(0)
             log.info(
                 "poll_complete",
@@ -248,12 +246,18 @@ async def build_and_run(config: Config) -> None:
     redis = Redis.from_url(config.redis_url, decode_responses=True)
     cursor_store = CursorStore(redis)
     event_store = await EventStore.connect(config.database_url)
+    publisher = await KafkaPublisher.connect(
+        bootstrap_servers=config.kafka_bootstrap_servers,
+        client_id=config.kafka_client_id,
+        topic=config.kafka_topic_mlb_raw,
+    )
 
-    ingestor = MLBIngestor(config, mlb_client, cursor_store, event_store)
+    ingestor = MLBIngestor(config, mlb_client, cursor_store, event_store, publisher)
 
     try:
         await ingestor.run()
     finally:
+        await publisher.close()
         await mlb_client.close()
         await event_store.close()
         await redis.aclose()

@@ -1,9 +1,8 @@
-"""Postgres writer for the MLB ingestor.
+"""Postgres writer for game metadata.
 
-Phase 1 writes events directly to Postgres. Phase 3 step 6 splits this:
-the ingestor produces to Kafka and the persistence-consumer writes here.
-
-Dedup happens at the DB via `events.event_id` PK — ON CONFLICT DO NOTHING.
+Pitch events flow through Kafka -> persistence-consumer; this module retains
+only the games-table upsert. Dedup of events happens downstream at the DB
+via `events.event_id` PK.
 """
 
 from __future__ import annotations
@@ -14,8 +13,8 @@ from typing import Any
 
 import asyncpg
 
-from schemas.mlb import EventType, MLBGameState, MLBPitchEvent, Sport
-from schemas.proto_utils import enum_int_to_name, proto_to_payload_dict
+from schemas.mlb import MLBGameState, Sport
+from schemas.proto_utils import enum_int_to_name
 from services.common.logging import get_logger
 
 _logger = get_logger(__name__)
@@ -33,33 +32,6 @@ class EventStore:
 
     async def close(self) -> None:
         await self._pool.close()
-
-    async def insert_pitch(self, event: MLBPitchEvent) -> bool:
-        """Insert a pitch event. Returns True if it was new, False if dedup'd."""
-        query = """
-        INSERT INTO events (
-            event_id, event_type, sport, game_pk,
-            event_time, source_time, ingest_time, payload
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
-        ON CONFLICT (event_id) DO NOTHING
-        RETURNING event_id
-        """
-        payload = proto_to_payload_dict(event)
-        spine = event.spine
-        async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                query,
-                spine.event_id,
-                enum_int_to_name(EventType.DESCRIPTOR, spine.event_type),
-                enum_int_to_name(Sport.DESCRIPTOR, spine.sport),
-                spine.game_pk,
-                spine.event_time.ToDatetime(tzinfo=UTC),
-                spine.source_time.ToDatetime(tzinfo=UTC),
-                spine.ingest_time.ToDatetime(tzinfo=UTC),
-                json.dumps(payload),
-            )
-        return row is not None
 
     async def upsert_game(self, game: MLBGameState, raw: dict[str, Any]) -> None:
         query = """
